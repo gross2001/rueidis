@@ -2,6 +2,7 @@ package rueidisotel
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -14,12 +15,28 @@ import (
 	"go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 
+	metricapi "go.opentelemetry.io/otel/metric"
+
 	"github.com/redis/rueidis"
 )
+
+var errMocked = errors.New("ERROR_MOCKED")
 
 // MockMeterProvider for testing purposes
 type MockMeterProvider struct {
 	metric.MeterProvider
+}
+
+func (*MockMeterProvider) Meter(name string, opts ...metricapi.MeterOption) metricapi.Meter {
+	return &mockMeter{}
+}
+
+type mockMeter struct {
+	metricapi.Meter
+}
+
+func (*mockMeter) Int64Counter(name string, options ...metricapi.Int64CounterOption) (metricapi.Int64Counter, error) {
+	return nil, errMocked
 }
 
 func TestWithClientGlobalProvider(t *testing.T) {

@@ -3,6 +3,7 @@ package rueidisotel
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"net"
 	"testing"
 
@@ -75,6 +76,23 @@ func TestNewClientError(t *testing.T) {
 			t.Error(err)
 		}
 	})
+
+	t.Run("mocked error from meter Int64Counter", func(t *testing.T) {
+		meterProvider := &MockMeterProvider{}
+		_, err := NewClient(
+			rueidis.ClientOption{
+				InitAddress: []string{"127.0.0.1:6379"},
+				DialFn: func(dst string, dialer *net.Dialer, _ *tls.Config) (conn net.Conn, err error) {
+					return dialer.Dial("tcp", dst)
+				},
+			},
+			WithMeterProvider(meterProvider),
+		)
+		if !errors.Is(err, errMocked) {
+			t.Errorf("mocked error: got %s, want %s", err, errMocked)
+		}
+	})
+
 }
 
 func TestTrackDialing(t *testing.T) {
